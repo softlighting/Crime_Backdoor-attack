@@ -268,7 +268,7 @@ python test.py --data CHI --checkpoint ./Save/CHI/model.pth
 
 3. **模型适配**:
    - STHSL 使用超图而非标准 GNN
-   - 需要调整 STM 模块以适配超图结构
+   - 需要先写出简单的STGCN网络，并根据stgcn网络等标准的时空模式来进行触发器注入
 
 ### 6.3 关键发现
 
@@ -295,3 +295,4 @@ python test.py --data CHI --checkpoint ./Save/CHI/model.pth
 - 扩展数据加载器支持触发器注入
 - 构建/提取邻接矩阵用于空域分析
 - 适配触发器模块以匹配超图结构
+
