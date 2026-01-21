@@ -1,0 +1,142 @@
+# CSTBA (Collaborative Spatio-Temporal Backdoor Trigger Algorithm) Configuration
+# ==============================================================================
+
+# Attack Basic Parameters
+attack:
+  poison_rate: 0.1                    # Poisoning ratio (5%-15% recommended)
+  target_type: "increase"             # "increase" or "decrease" crime prediction
+  target_scale: 2.0                   # Scale factor for target manipulation
+  trigger_mode: "joint"               # "temporal_only" / "spatial_only" / "joint"
+  seed: 42                            # Random seed for reproducibility
+
+# Temporal Trigger Module (TTM) Parameters
+temporal:
+  trigger_type: "periodic"            # "periodic" / "spike" / "distributed"
+  injection_window_ratio: 0.33        # Inject in the last 1/3 of time window
+  amplitude_ratio: 0.1                # Trigger amplitude as ratio of data std
+  frequency_constraint: true          # Enable frequency domain constraint
+  smoothness_weight: 0.1              # Temporal smoothness loss weight
+
+  # Periodic trigger specific
+  periodic:
+    num_frequencies: 3                # Number of frequency components
+    min_period: 3                     # Minimum period (in time steps)
+    max_period: 10                    # Maximum period (in time steps)
+
+  # Spike trigger specific
+  spike:
+    spike_width: 2                    # Width of spike (time steps)
+    recovery_rate: 0.5                # Recovery rate after spike
+
+  # Distributed trigger specific
+  distributed:
+    num_segments: 5                   # Number of trigger segments
+    segment_length: 2                 # Length of each segment
+
+# Spatial Trigger Module (STM) Parameters
+spatial:
+  trigger_type: "feature"             # "feature" / "topology" / "both"
+  num_trigger_nodes: 5                # Number of trigger nodes
+  node_selection: "centrality"        # "centrality" / "random" / "target_proximity"
+  homophily_constraint: true          # Enable homophily-based camouflage
+
+  # Centrality fusion weights (must sum to 1.0)
+  centrality_weights:
+    pagerank: 0.4
+    betweenness: 0.3
+    eigenvector: 0.3
+
+  # Feature trigger parameters
+  feature:
+    perturbation_ratio: 0.1           # Feature perturbation as ratio of std
+    target_categories: null           # Which crime categories to target (null = all)
+
+  # Topology trigger parameters
+  topology:
+    num_edges: 3                      # Number of edges to inject
+    edge_weight_ratio: 0.5            # Edge weight as ratio of average weight
+
+# Synergy Optimizer Parameters
+synergy:
+  lambda_attack: 1.0                  # Attack loss weight
+  lambda_stealth: 0.5                 # Stealthiness loss weight
+  lambda_synergy: 0.3                 # Synergy loss weight (mutual information)
+  mi_estimation: "mine"               # Mutual information estimation: "mine" / "nwj" / "infonce"
+
+  # Loss component weights
+  stealth_weights:
+    smoothness: 0.3                   # Temporal smoothness weight
+    frequency: 0.3                    # Frequency consistency weight
+    homophily: 0.2                    # Spatial homophily weight
+    topology: 0.2                     # Topology stealth weight
+
+# Training Parameters
+training:
+  # Surrogate model pre-training
+  surrogate_epochs: 50                # Surrogate model pre-training epochs
+  surrogate_lr: 0.001                 # Surrogate model learning rate
+
+  # Bilevel optimization
+  bilevel_iterations: 100             # Number of bilevel optimization iterations
+  inner_steps: 5                      # Inner loop steps per outer step
+  inner_lr: 0.001                     # Inner loop (model) learning rate
+  outer_lr: 0.0001                    # Outer loop (trigger) learning rate
+
+  # General training
+  batch_size: 16                      # Batch size
+  grad_clip: 1.0                      # Gradient clipping threshold
+  early_stop_patience: 10             # Early stopping patience
+
+# Dataset-specific Parameters
+dataset:
+  nyc:
+    row: 16
+    col: 16
+    area_num: 256
+    temporal_range: 30
+    crime_categories: 4
+  chi:
+    row: 14
+    col: 12
+    area_num: 168
+    temporal_range: 30
+    crime_categories: 4
+
+# Model-specific Adaptation
+model_adaptation:
+  sthsl:
+    # STHSL uses hypergraph, adapt STM accordingly
+    use_hypergraph: true
+    hyperedge_trigger: false          # Whether to manipulate hyperedges
+  stgcn:
+    recommended_poison_rate: 0.10
+    temporal_trigger_type: "periodic"
+  dcrnn:
+    recommended_poison_rate: 0.08
+    temporal_trigger_type: "spike"
+  gwn:
+    recommended_poison_rate: 0.06
+    temporal_trigger_type: "periodic"
+    use_adaptive_amplification: true  # Leverage adaptive adjacency
+  astgcn:
+    recommended_poison_rate: 0.09
+    temporal_trigger_type: "distributed"
+
+# Evaluation Parameters
+evaluation:
+  asr_threshold: 0.5                  # Prediction shift threshold for ASR
+  ba_drop_tolerance: 0.01             # Acceptable BA drop (1%)
+
+  # Stealthiness evaluation
+  stealthiness:
+    time_smoothness_threshold: 0.1
+    spectral_similarity_threshold: 0.9
+    feature_kl_threshold: 0.1
+
+# Logging and Saving
+output:
+  save_triggers: true                 # Save trained triggers
+  save_poisoned_data: true            # Save poisoned dataset
+  save_checkpoints: true              # Save training checkpoints
+  log_interval: 10                    # Logging interval (iterations)
+  visualization: true                 # Generate visualizations
